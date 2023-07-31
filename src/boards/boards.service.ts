@@ -1,8 +1,44 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Board, BoardStatus } from './boards.model';
-import { v1 as uuid } from 'uuid';
+import { BoardStatus } from './board-status.enum';
 import { CreateBoardDto } from './dto/create-board-dto';
 
+import { InjectRepository } from '@nestjs/typeorm';
+import { Board } from './boards.entity';
+import { Repository } from 'typeorm';
+
+@Injectable()
+export class BoardsService {
+  constructor(
+    @InjectRepository(Board)
+    private boardRepository: Repository<Board>,
+  ) {}
+
+  async getBoardById(id: number): Promise<Board> {
+    const found = await this.boardRepository.findOneBy({ id });
+
+    if (!found) {
+      throw new NotFoundException(`Can't find Board with your ${id}`);
+    }
+
+    return found;
+  }
+
+  async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
+    const { title, description } = createBoardDto;
+
+    const board = this.boardRepository.create({
+      title: title,
+      description: description,
+      status: BoardStatus.PUBLIC,
+    });
+
+    await this.boardRepository.save(board);
+
+    return board;
+  }
+}
+
+/*
 @Injectable()
 export class BoardsService {
   private boards: Board[] = [];
@@ -11,30 +47,7 @@ export class BoardsService {
     return this.boards;
   }
 
-  createBoard(createBoardDto: CreateBoardDto) {
-    const { title, description } = createBoardDto;
 
-    const board = {
-      id: uuid(),
-      title: title,
-      description: description,
-      status: BoardStatus.PUBLIC,
-    };
-
-    this.boards.push(board);
-
-    return board;
-  }
-
-  getBoardById(id: string): Board {
-    const found = this.boards.find((board) => board.id === id);
-
-    if (!found) {
-      throw new NotFoundException(`Can't find Board with your ${id}`);
-    }
-
-    return found;
-  }
 
   deleteBoard(id: string): void {
     const found = this.getBoardById(id);
@@ -49,5 +62,5 @@ export class BoardsService {
     return board;
   }
 }
-
+*/
 // 나중에 따로 getBoardById에 에러 처리 코드 추가하자. 노션에 '게시판 CRUD 만들기'에 해당 내용 있음. 그리고 나중에 상황 보고 다른 함수들에도 오류 처리 하는 코드 추가 고려
