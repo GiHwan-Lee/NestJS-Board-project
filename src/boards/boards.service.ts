@@ -2,16 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { BoardStatus } from './board-status.enum';
 import { CreateBoardDto } from './dto/create-board-dto';
 
-import { InjectRepository } from '@nestjs/typeorm';
+//import { InjectRepository } from '@nestjs/typeorm';
 import { Board } from './boards.entity';
-import { Repository } from 'typeorm';
+//import { Repository } from 'typeorm';
+import { BoardRepository } from './boards.repository';
 
 @Injectable()
 export class BoardsService {
-  constructor(
-    @InjectRepository(Board)
-    private boardRepository: Repository<Board>,
-  ) {}
+  constructor(private boardRepository: BoardRepository) {}
 
   async getBoardById(id: number): Promise<Board> {
     const found = await this.boardRepository.findOneBy({ id });
@@ -23,44 +21,29 @@ export class BoardsService {
     return found;
   }
 
-  async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
-    const { title, description } = createBoardDto;
+  createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
+    return this.boardRepository.createBoard(createBoardDto);
+  }
 
-    const board = this.boardRepository.create({
-      title: title,
-      description: description,
-      status: BoardStatus.PUBLIC,
-    });
+  async deleteBoard(id: number): Promise<void> {
+    const result = await this.boardRepository.delete(id);
 
+    if (result.affected === 0) {
+      throw new NotFoundException(`Can't find Board with your ${id}`);
+    }
+  }
+
+  async updateBoardStatus(id: number, status: BoardStatus): Promise<Board> {
+    const board = await this.getBoardById(id);
+
+    board.status = status;
     await this.boardRepository.save(board);
 
     return board;
   }
-}
 
-/*
-@Injectable()
-export class BoardsService {
-  private boards: Board[] = [];
-
-  getAllBoards(): Board[] {
-    return this.boards;
-  }
-
-
-
-  deleteBoard(id: string): void {
-    const found = this.getBoardById(id);
-    this.boards = this.boards.filter((board) => board.id !== found.id);
-  }
-
-  updateBoardStatus(id: string, status: BoardStatus): Board {
-    const board = this.getBoardById(id);
-
-    board.status = status;
-
-    return board;
+  async getAllBoards(): Promise<Board[]> {
+    return await this.boardRepository.find();
   }
 }
-*/
 // 나중에 따로 getBoardById에 에러 처리 코드 추가하자. 노션에 '게시판 CRUD 만들기'에 해당 내용 있음. 그리고 나중에 상황 보고 다른 함수들에도 오류 처리 하는 코드 추가 고려
