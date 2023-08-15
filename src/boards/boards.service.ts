@@ -7,8 +7,9 @@ import { User } from 'src/auth/user.entity';
 
 @Injectable()
 export class BoardsService {
-  constructor(private boardRepository: BoardRepository) {}
+  constructor(private boardRepository: BoardRepository) {} // board 레포지토리 주입
 
+  // 사용자에 의해 특정 아이디의 게시글을 검색
   async getBoardById(id: number, user: User): Promise<Board> {
     const query = await this.boardRepository.createQueryBuilder('board');
 
@@ -26,10 +27,12 @@ export class BoardsService {
     return found;
   }
 
+  // 새로운 게시글 생성
   createBoard(createBoardDto: CreateBoardDto, user: User): Promise<Board> {
     return this.boardRepository.createBoard(createBoardDto, user);
   }
 
+  // 사용자에 의해 게시글 삭제
   async deleteBoard(id: number, user: User): Promise<void> {
     const result = await this.boardRepository
       .createQueryBuilder()
@@ -43,6 +46,7 @@ export class BoardsService {
     }
   }
 
+  // 게시글 상태 업데이트
   async updateBoardStatus(
     id: number,
     status: BoardStatus,
@@ -56,10 +60,12 @@ export class BoardsService {
     return board;
   }
 
+  // 모든 게시글 가져오기
   async getAllBoards(): Promise<Board[]> {
     return await this.boardRepository.find();
   }
 
+  // 특정 사용자의 게시글 모두 가져오기
   async getAllBoardsByUsername(user: User): Promise<Board[]> {
     const query = this.boardRepository.createQueryBuilder('board');
 
@@ -70,4 +76,3 @@ export class BoardsService {
     return boards;
   }
 }
-// 나중에 따로 getBoardById에 에러 처리 코드 추가하자. 노션에 '게시판 CRUD 만들기'에 해당 내용 있음. 그리고 나중에 상황 보고 다른 함수들에도 오류 처리 하는 코드 추가 고려
